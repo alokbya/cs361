@@ -1,0 +1,6 @@
+@PetRemindersService_HostAddress = http://localhost:5103
+
+GET {{PetRemindersService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
