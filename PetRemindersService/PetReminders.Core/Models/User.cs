@@ -2,7 +2,7 @@
 
 public class User
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; } = Guid.NewGuid();
     public required string Email { get; set; }
     public required string Name { get; set; }
     public required string PasswordHash { get; set; }
@@ -10,6 +10,6 @@ public class User
     public DateTime? LastLoginAt { get; set; }
 
     // Navigation properties
-    public List<FeedingEvent> FeedingEvents { get; set; } = new();
+    public List<ReminderEvent> FeedingEvents { get; set; } = new();
     public List<Pet> Pets { get; set; } = new();
 }

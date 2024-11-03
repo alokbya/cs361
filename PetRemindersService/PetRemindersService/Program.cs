@@ -2,8 +2,24 @@ using Microsoft.EntityFrameworkCore;
 using PetReminders.Core.Models;
 using PetReminders.Data;
 using Microsoft.OpenApi.Models;
+using PetReminders.Data.Repositories;
+using PetReminders.Core.Interfaces;
+using PetReminders.Api.Endpoints.Users;
+using PetReminders.Api.Endpoints.Pets;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Add CORS configuration
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApp",
+        builder => builder
+            .WithOrigins("http://localhost:5173") // Your React app's URL
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials()
+    );
+});
 
 // Add services - remove duplicates
 builder.Services.AddEndpointsApiExplorer();
@@ -23,6 +39,11 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+builder.Services.AddScoped<IPetRepository, PetRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IReminderEventRepository, ReminderEventRepository>();
+
+
 builder.Services.AddDbContext<PetReminderContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -33,6 +54,25 @@ builder.Services.AddHttpsRedirection(options =>
 });
 
 var app = builder.Build();
+app.UseCors("AllowReactApp");
+
+// Add this after building the app
+//if (app.Environment.IsDevelopment())
+//{
+//    using (var scope = app.Services.CreateScope())
+//    {
+//        var db = scope.ServiceProvider.GetRequiredService<PetReminderContext>();
+//        //db.Database.EnsureDeleted(); // Be careful with this in production!
+//        db.Database.EnsureCreated();
+//    }
+//}
+
+// map endpoints
+app.MapUserEndpoints();
+app.MapPetEndpoints();
+app.MapReminderEventEndpoints();
+
+
 
 if (app.Environment.IsDevelopment())
 {

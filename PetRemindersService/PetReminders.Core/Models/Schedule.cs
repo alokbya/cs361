@@ -5,9 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace PetReminders.Core.Models;
-public class FeedingSchedule
+public class Schedule
 {
     public int Id { get; set; }
-    public TimeSpan FeedingTime { get; set; }
+    public TimeSpan TimeSpan { get; set; }
     // Additional fields later: Recurrence, FoodType
 }

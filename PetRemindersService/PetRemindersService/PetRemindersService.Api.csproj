@@ -15,4 +15,8 @@
     <ProjectReference Include="..\PetReminders.Data\PetReminders.Data.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Controllers\" />
+  </ItemGroup>
+
 </Project>
