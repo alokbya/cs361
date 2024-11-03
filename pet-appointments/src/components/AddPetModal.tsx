@@ -1,24 +1,25 @@
+// src/components/AddPetModal.tsx
 import { useState } from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
 import { useCreatePet } from '../hooks/usePets';
-import type { UseMutationResult } from '@tanstack/react-query';
-import type IPet from '../interfaces/IPet';
-import type ICreatePetRequest from '../interfaces/requests/ICreatePetRequest';
 
 interface AddPetModalProps {
   show: boolean;
   onHide: () => void;
   userId: string;
+  onSuccess: (message: string) => void;
+  onError: (message: string) => void;
 }
 
-const AddPetModal = ({ show, onHide, userId }: AddPetModalProps) => {
+const AddPetModal = ({ 
+  show, 
+  onHide, 
+  userId,
+  onSuccess,
+  onError 
+}: AddPetModalProps) => {
   const [petName, setPetName] = useState('');
-  const createPetMutation: UseMutationResult<
-    IPet,
-    Error,
-    ICreatePetRequest,
-    unknown
-  > = useCreatePet();
+  const createPetMutation = useCreatePet();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,8 +32,10 @@ const AddPetModal = ({ show, onHide, userId }: AddPetModalProps) => {
         userId: userId
       });
       setPetName('');
+      onSuccess(`Successfully created pet ${petName}!`);
       onHide();
     } catch (error) {
+      onError(`Failed to create pet. Please try again.`);
       console.error('Failed to create pet:', error);
     }
   };

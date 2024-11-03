@@ -1,7 +1,13 @@
+// src/interfaces/IReminderEvent.ts
+export enum ReminderEventType {
+  Feeding,
+  Walk
+}
+
 export default interface IReminderEvent {
   id: string;
-  eventType: 'Feeding' | 'Walk';
+  eventType: ReminderEventType;
   eventTime: string;
-  userName: string;
-  petName: string;
+  userId: string;
+  petId: string;
 }
