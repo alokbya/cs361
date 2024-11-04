@@ -19,6 +19,9 @@ public record PetResponse(
     IEnumerable<Guid> UserIds  // Names of users who can manage this pet
 );
 
+public record AddUserToPetRequest(string UserId);
+
+
 public static class PetEndpoints
 {
     public static async Task<IResult> GetAll(IPetRepository repo)
@@ -112,5 +115,32 @@ public static class PetEndpoints
     {
         var result = await repo.DeleteAsync(id);
         return result ? Results.Ok() : Results.NotFound();
+    }
+
+    public static async Task<IResult> AddUserToPet(
+    Guid petId,
+    Guid userId,
+    IPetRepository petRepo,
+    IUserRepository userRepo)
+    {
+        var pet = await petRepo.GetByIdAsync(petId);
+        if (pet == null) return Results.NotFound("Pet not found");
+
+        var user = await userRepo.GetByIdAsync(userId);
+        if (user == null) return Results.NotFound("User not found");
+
+        // Check if user already has this pet
+        if (pet.Users.Any(u => u.Id == userId))
+            return Results.BadRequest("User already has access to this pet");
+
+        pet.Users.Add(user);
+        await petRepo.UpdateAsync(pet);
+
+        return Results.Ok(new PetResponse(
+            pet.Id,
+            pet.Name,
+            pet.CreatedAt,
+            pet.Users.Select(u => u.Id)
+        ));
     }
 }

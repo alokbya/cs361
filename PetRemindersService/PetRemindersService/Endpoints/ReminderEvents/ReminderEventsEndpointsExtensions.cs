@@ -30,6 +30,16 @@
         .WithName("GetReminderEventsByPet")
         .WithDescription("Gets all reminder events for a pet");
 
+        group.MapGet("/pet/{petId}/latest", async (string petId, IReminderEventRepository repo) =>
+        {
+            if (!Guid.TryParse(petId, out Guid guid))
+                return Results.BadRequest("Invalid pet ID format");
+
+            return await ReminderEventEndpoints.GetLatestByPetId(guid, repo);
+        })
+        .WithName("GetLatestReminderEventByPet")
+        .WithDescription("Gets the latest reminder event for a pet");
+
         group.MapPost("/", ReminderEventEndpoints.Create)
             .WithName("CreateReminderEvent")
             .WithDescription("Creates a new reminder event");

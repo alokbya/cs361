@@ -6,6 +6,7 @@ using PetReminders.Data.Repositories;
 using PetReminders.Core.Interfaces;
 using PetReminders.Api.Endpoints.Users;
 using PetReminders.Api.Endpoints.Pets;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,10 +22,21 @@ builder.Services.AddCors(options =>
     );
 });
 
-// Add services - remove duplicates
+// convert enums properly
+// Add services to the container
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
+
+// If you're using Swagger, also configure it to handle enums as strings
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
+    c.UseInlineDefinitionsForEnums(); // This helps Swagger understand enum values
+
     c.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "Pet Reminders API",

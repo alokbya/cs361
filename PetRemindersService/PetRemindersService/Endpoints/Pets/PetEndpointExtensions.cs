@@ -57,6 +57,19 @@ public static class PetEndpointExtensions
             .WithName("DeletePet")
             .WithDescription("Deletes a pet");
 
+        group.MapPost("/{id}/users", async (string id, AddUserToPetRequest request, IPetRepository petRepo, IUserRepository userRepo) =>
+        {
+            if (!Guid.TryParse(id, out Guid petId))
+                return Results.BadRequest("Invalid pet ID format");
+
+            if (!Guid.TryParse(request.UserId, out Guid userId))
+                return Results.BadRequest("Invalid user ID format");
+
+            return await PetEndpoints.AddUserToPet(petId, userId, petRepo, userRepo);
+        })
+        .WithName("AddUserToPet")
+        .WithDescription("Associates an existing pet with a user");
+
         return app;
     }
 }

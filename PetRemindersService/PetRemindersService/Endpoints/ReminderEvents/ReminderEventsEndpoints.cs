@@ -25,6 +25,13 @@ public static class ReminderEventEndpoints
         return Results.Ok(events.Select(ToResponse));
     }
 
+    public static async Task<IResult> GetLatestByPetId(Guid petId, IReminderEventRepository repo)
+    {
+        var events = await repo.GetRecentByPetIdAsync(petId, 1);
+        if (events.Count == 0) return Results.Ok(new List<ReminderEventResponse>());
+        return Results.Ok(events.Select(ToResponse));
+    }
+
     public static async Task<IResult> Create(
         CreateReminderEventRequest request,
         IReminderEventRepository repo,
