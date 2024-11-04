@@ -33,9 +33,11 @@ public static class UserEndpointExtensions
                 return operation;
             });
 
+        // Make sure this endpoint is mapped
         group.MapPost("/", UserEndpoints.Create)
             .WithName("CreateUser")
-            .WithDescription("Creates a new user");
+            .WithDescription("Creates a new user")
+            .AllowAnonymous();  // Important! This allows unauthenticated access
 
         group.MapPut("/{id}", async (string id, UpdateUserRequest request, IUserRepository repo) =>
         {

@@ -1,16 +1,17 @@
-// src/pages/Home.tsx
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useUsers } from '../hooks/useUsers';
 import { usePets } from '../hooks/usePets';
 import { Button, Col, Container, Form, Row, Toast, ToastContainer } from 'react-bootstrap';
-import IUser from '../interfaces/IUser';
-import IPet from '../interfaces/IPet';
+import { useAuth } from '../contexts/AuthContext'; // Add this import
+import type IUser from '../interfaces/IUser';
+import type IPet from '../interfaces/IPet';
 import PetCard from '../components/PetCard';
 import AddPetModal from '../components/AddPetModal';
 import AddUserModal from '../components/AddUserModal';
 
 export const Home = () => {
-  const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const { currentUser } = useAuth(); // Get the current user
+  const [selectedUserId, setSelectedUserId] = useState<string>(currentUser?.id || '');
   const [showAddPetModal, setShowAddPetModal] = useState(false);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>({
@@ -24,6 +25,16 @@ export const Home = () => {
     data: pets, 
     isLoading: isLoadingPets 
   } = usePets(selectedUserId, { enabled: !!selectedUserId });
+
+  // Filter users to only show the current user
+  const filteredUsers = users?.filter(user => user.id === currentUser?.id) || [];
+
+  // Set the selected user ID to the current user's ID when users data is loaded
+  useEffect(() => {
+    if (currentUser && (!selectedUserId || selectedUserId !== currentUser.id)) {
+      setSelectedUserId(currentUser.id);
+    }
+  }, [currentUser, selectedUserId]);
 
   const getUserNames = (userIds: string[]): string[] => {
     if (!users) return [];
@@ -49,14 +60,15 @@ export const Home = () => {
         <Col md={8} lg={6} className="mx-auto">
           <div className="d-flex align-items-end gap-3">
             <Form.Group className="flex-grow-1">
-              <Form.Label className="h5 mb-3">Select User</Form.Label>
+              <Form.Label className="h5 mb-3">Current User</Form.Label>
               <Form.Select
                 value={selectedUserId}
                 onChange={(e) => setSelectedUserId(e.target.value)}
                 className="form-select-lg"
+                disabled // Since we only have one user, we can disable the select
               >
                 <option value="">Choose a user...</option>
-                {users?.map((user: IUser) => (
+                {filteredUsers.map((user: IUser) => (
                   <option key={user.id} value={user.id}>
                     {user.name}
                   </option>
@@ -72,16 +84,6 @@ export const Home = () => {
             >
               <i className="bi bi-plus-lg me-2"></i>
               Add Pet
-            </Button>
-
-            <Button
-              variant="primary"
-              size="lg"
-              onClick={() => setShowAddUserModal(true)}
-              disabled={!selectedUserId}
-            >
-              <i className="bi bi-plus-lg me-2"></i>
-              Add User
             </Button>
           </div>
         </Col>

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using PetReminders.Core.Dto;
 using PetReminders.Core.Interfaces;
 using PetReminders.Core.Models;
+using PetReminders.Core.Services;
 
 namespace PetReminders.Api.Endpoints.Users;
 
@@ -36,14 +37,17 @@ public static class UserEndpoints
         ));
     }
 
-    public static async Task<IResult> Create(CreateUserRequest request, IUserRepository repo)
+    public static async Task<IResult> Create(
+    CreateUserRequest request,
+    IUserRepository repo,
+    IPasswordService passwordService)
     {
         if (!request.IsValidEmail())
             return Results.BadRequest("Invalid email format");
 
         try
         {
-            // Check if email exists first (optional, but gives a nicer error message)
+            // Check if email exists first
             var existingUser = await repo.GetByEmailAsync(request.Email);
             if (existingUser != null)
                 return Results.BadRequest("Email address is already registered");
@@ -52,7 +56,7 @@ public static class UserEndpoints
             {
                 Email = request.Email,
                 Name = request.Name,
-                PasswordHash = request.Password, // In production, hash this!
+                PasswordHash = passwordService.HashPassword(request.Password),
                 CreatedAt = DateTime.UtcNow
             };
 

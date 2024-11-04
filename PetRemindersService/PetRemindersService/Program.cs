@@ -7,6 +7,8 @@ using PetReminders.Core.Interfaces;
 using PetReminders.Api.Endpoints.Users;
 using PetReminders.Api.Endpoints.Pets;
 using System.Text.Json.Serialization;
+using PetReminders.Core.Services;
+using PetReminders.Api.Endpoints;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,6 +53,7 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<IPetRepository, PetRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IReminderEventRepository, ReminderEventRepository>();
@@ -80,6 +83,7 @@ app.UseCors("AllowReactApp");
 //}
 
 // map endpoints
+app.MapAuthEndpoints();
 app.MapUserEndpoints();
 app.MapPetEndpoints();
 app.MapReminderEventEndpoints();

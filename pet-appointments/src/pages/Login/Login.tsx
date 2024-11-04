@@ -1,38 +1,52 @@
-import { Container, Form, Button } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+// src/pages/Login/Login.tsx
+import { Container, Form, Button, Alert } from 'react-bootstrap';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 import './Login.css';
 
-
-interface LoginProps {
-    // Add any props if needed
+interface LocationState {
+    message?: string;
 }
 
-const Login: React.FC<LoginProps> = () => {
+const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const navigate = useNavigate();
+    const { login } = useAuth();
+    const location = useLocation();
+    const state = location.state as LocationState;
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Add login logic here
-        console.log('Login attempted:', { email, password });
+        try {
+            await login(email, password);
+            navigate('/');
+        } catch (error) {
+            setError('Invalid email or password');
+        }
     };
 
     return (
         <Container className="d-flex flex-column align-items-center justify-content-between min-vh-100 py-4">
-            {/* Main Content */}
             <div className="w-100 max-w-md d-flex flex-column align-items-center">
-                {/* Title */}
-                <h1 className="display-4 fw-bold mb-4 text-uppercase text-nowrap" 
-                    style={{ 
-                        textShadow: '2px 2px 4px rgba(0,0,0,0.2)',
-                        letterSpacing: '0.1em',
-                        whiteSpace: 'nowrap'
-                    }}>
+                <h1 className="display-4 fw-bold mb-4 text-uppercase text-nowrap">
                     Pet Reminders
                 </h1>
 
-                {/* Logo */}
+                {state?.message && (
+                    <Alert variant="success" className="w-100 mb-4">
+                        {state.message}
+                    </Alert>
+                )}
+
+                {error && (
+                    <Alert variant="danger" className="w-100 mb-4">
+                        {error}
+                    </Alert>
+                )}
+
                 <div className="d-flex justify-content-center align-items-center rounded-circle bg-secondary mb-4" 
                     style={{ 
                         width: '256px', 
@@ -40,13 +54,12 @@ const Login: React.FC<LoginProps> = () => {
                         overflow: 'hidden',
                     }}>
                     <img 
-                        src="src\assets\collie.png" 
+                        src="/src/assets/collie.png" 
                         alt="Dog illustration" 
                         className="w-100 h-100 object-fit-cover"
                     />
                 </div>
 
-                {/* Form */}
                 <Form onSubmit={handleSubmit} className="w-100 max-w-sm">
                     <Form.Group className="mb-3">
                         <Form.Control
@@ -68,15 +81,13 @@ const Login: React.FC<LoginProps> = () => {
                         />
                     </Form.Group>
 
-                    {/* Create Account Link */}
                     <div className="text-center mb-3">
                         <span>New user? </span>
-                        <Link to="/create-account" className="text-primary text-decoration-none">
+                        <Link to="/register" className="text-primary text-decoration-none">
                             Create account
                         </Link>
                     </div>
 
-                    {/* Login Button */}
                     <Button 
                         type="submit" 
                         variant="outline-dark"
@@ -86,15 +97,9 @@ const Login: React.FC<LoginProps> = () => {
                     </Button>
                 </Form>
 
-                {/* Inclusivity Message */}
                 <p className="text-center text-muted px-4" style={{ maxWidth: '400px' }}>
                     Coordinate care, track meals, and ensure your pet's health – all in one place. Join our community of responsible pet owners!
                 </p>
-            </div>
-
-            {/* Footer placeholder if needed */}
-            <div className="w-100 bg-dark text-white text-center py-3 mt-4">
-                <p className="mb-0 text-uppercase">Footer</p>
             </div>
         </Container>
     );
