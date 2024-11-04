@@ -31,4 +31,9 @@ export const petService = {
   delete: async (id: string): Promise<void> => {
     await apiClient.delete(`/pets/${id}`);
   },
+
+  addUserToPet: async (petId: string, userId: string): Promise<IPet> => {
+    const response = await apiClient.post<IPet>(`/pets/${petId}/users`, { userId });
+    return response.data;
+  },
 };

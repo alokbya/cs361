@@ -1,9 +1,9 @@
-// src/components/PetCard.tsx
-import { Card, Button } from 'react-bootstrap';
+import { Card, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
+import { useLatestReminderEvent, useCreateReminderEvent } from '../hooks/useReminderEvents';
 import { ReminderEventType } from '../interfaces/IReminderEvent';
-import IPet from '../interfaces/IPet';
-import { useCreateReminderEvent } from '../hooks/useReminderEvents';
+import type IPet from '../interfaces/IPet';
+import { useState } from 'react';
 
 interface PetCardProps {
   pet: IPet;
@@ -11,7 +11,6 @@ interface PetCardProps {
   currentUserId: string;
   onSuccess: (message: string) => void;
   onError: (message: string) => void;
-  latestFeeding?: { eventTime: string } | null;
 }
 
 const PetCard = ({
@@ -19,10 +18,11 @@ const PetCard = ({
   userNames = [],
   currentUserId,
   onSuccess,
-  onError,
-  latestFeeding
+  onError
 }: PetCardProps) => {
+  const [copied, setCopied] = useState(false);
   const createEvent = useCreateReminderEvent();
+  const { data: latestFeeding } = useLatestReminderEvent(pet.id);
 
   const handleFeed = async () => {
     try {
@@ -37,8 +37,17 @@ const PetCard = ({
     }
   };
 
+  const copyId = () => {
+    navigator.clipboard.writeText(pet.id);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   const formatLastFed = (dateString: string) => {
-    return formatDistanceToNow(new Date(dateString), { addSuffix: true });
+    let utcDate = new Date(dateString);
+    let localDate = new Date(utcDate.getTime() - utcDate.getTimezoneOffset() * 60000);
+    let formattedDistance = formatDistanceToNow(localDate, { addSuffix: true });
+    return formattedDistance;
   };
 
   return (
@@ -66,13 +75,37 @@ const PetCard = ({
         <Card.Text className="text-muted small mb-2">
           Created: {new Date(pet.createdAt).toLocaleDateString()}
         </Card.Text>
+
+        {/* Add Pet ID with copy functionality */}
+        <Card.Text className="text-muted small mb-2">
+          <OverlayTrigger
+            placement="top"
+            overlay={
+              <Tooltip id={`tooltip-${pet.id}`}>
+                {copied ? 'Copied!' : 'Click to copy ID'}
+              </Tooltip>
+            }
+          >
+            <span 
+              onClick={copyId} 
+              style={{ cursor: 'pointer' }}
+              className="d-inline-flex align-items-center"
+            >
+              <i className="bi bi-key-fill me-1"></i>
+              ID: {pet.id}
+              <i className="bi bi-clipboard ms-1" style={{ fontSize: '0.8em' }}></i>
+            </span>
+          </OverlayTrigger>
+        </Card.Text>
         
-        {latestFeeding && (
-          <Card.Text className="text-success mb-2">
-            <i className="bi bi-clock-history me-1"></i>
-            Last fed: {formatLastFed(latestFeeding.eventTime)}
-          </Card.Text>
-        )}
+        <Card.Text className={latestFeeding ? 'text-success mb-2' : 'text-muted mb-2'}>
+          <i className="bi bi-clock-history me-1"></i>
+          {latestFeeding ? (
+            `Last fed: ${formatLastFed(latestFeeding.eventTime)}`
+          ) : (
+            'No feeding events recorded'
+          )}
+        </Card.Text>
         
         {userNames.length > 0 && (
           <div className="mt-3">

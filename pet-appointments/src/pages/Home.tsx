@@ -7,10 +7,12 @@ import IUser from '../interfaces/IUser';
 import IPet from '../interfaces/IPet';
 import PetCard from '../components/PetCard';
 import AddPetModal from '../components/AddPetModal';
+import AddUserModal from '../components/AddUserModal';
 
 export const Home = () => {
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [showAddPetModal, setShowAddPetModal] = useState(false);
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>({
     show: false,
     message: '',
@@ -71,6 +73,16 @@ export const Home = () => {
               <i className="bi bi-plus-lg me-2"></i>
               Add Pet
             </Button>
+
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={() => setShowAddUserModal(true)}
+              disabled={!selectedUserId}
+            >
+              <i className="bi bi-plus-lg me-2"></i>
+              Add User
+            </Button>
           </div>
         </Col>
       </Row>
@@ -116,6 +128,13 @@ export const Home = () => {
         show={showAddPetModal}
         onHide={() => setShowAddPetModal(false)}
         userId={selectedUserId}
+        onSuccess={(msg) => showToast(msg, 'success')}
+        onError={(msg) => showToast(msg, 'error')}
+      />
+
+      <AddUserModal
+        show={showAddUserModal}
+        onHide={() => setShowAddUserModal(false)}
         onSuccess={(msg) => showToast(msg, 'success')}
         onError={(msg) => showToast(msg, 'error')}
       />
