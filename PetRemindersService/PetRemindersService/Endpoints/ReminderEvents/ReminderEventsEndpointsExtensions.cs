@@ -44,6 +44,16 @@
             .WithName("CreateReminderEvent")
             .WithDescription("Creates a new reminder event");
 
+        group.MapDelete("/{id}", async (string id, IReminderEventRepository repo) =>
+        {
+            if (!Guid.TryParse(id, out Guid eventId))
+                return Results.BadRequest("Invalid ID format");
+
+            return await ReminderEventEndpoints.Delete(eventId, repo);
+        })
+        .WithName("DeleteReminderEvent")
+        .WithDescription("Deletes a reminder event");
+
         return app;
     }
 }

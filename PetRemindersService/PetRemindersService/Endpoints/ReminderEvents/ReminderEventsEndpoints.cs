@@ -56,6 +56,25 @@ public static class ReminderEventEndpoints
         return Results.Created($"/reminderevents/{created.Id}", ToResponse(created));
     }
 
+    public static async Task<IResult> Delete(
+    Guid id,
+    IReminderEventRepository repo)
+    {
+        try
+        {
+            var success = await repo.DeleteAsync(id);
+            if (!success)
+            {
+                return Results.NotFound();
+            }
+            return Results.NoContent();
+        }
+        catch (Exception)
+        {
+            return Results.BadRequest("Failed to delete reminder event");
+        }
+    }
+
     private static ReminderEventResponse ToResponse(ReminderEvent e) => new(
         e.Id,
         e.EventType,

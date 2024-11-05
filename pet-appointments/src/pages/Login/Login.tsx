@@ -69,6 +69,7 @@ const Login = () => {
                             onChange={(e) => setEmail(e.target.value)}
                             className="rounded-pill text-center text-uppercase py-2"
                         />
+                        <span>We will not sell your email address or spam you.</span>
                     </Form.Group>
 
                     <Form.Group className="mb-3">

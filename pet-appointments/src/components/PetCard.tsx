@@ -5,6 +5,7 @@ import { ReminderEventType } from '../interfaces/IReminderEvent';
 import type IPet from '../interfaces/IPet';
 import { useState } from 'react';
 import PetDetailsModal from './PetDetailsModal';
+import { apiClient } from '../api/client';
 
 interface PetCardProps {
   pet: IPet;
@@ -23,20 +24,43 @@ const PetCard = ({
 }: PetCardProps) => {
   const [showDetails, setShowDetails] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [lastFeedingEvent, setLastFeedingEvent] = useState<{ id: string; time: Date } | null>(null);
+  const [isUndoing, setIsUndoing] = useState(false);
   const createEvent = useCreateReminderEvent();
-  const { data: latestFeeding } = useLatestReminderEvent(pet.id);
+  const { data: latestFeeding, refetch: refetchLatestFeeding } = useLatestReminderEvent(pet.id);
 
   const handleFeed = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click when clicking feed button
     try {
-      await createEvent.mutateAsync({
+      const response = await createEvent.mutateAsync({
         petId: pet.id,
         userId: currentUserId,
         eventType: ReminderEventType.Feeding
       });
+      setLastFeedingEvent({
+        id: response.id,
+        time: new Date(response.eventTime)
+      });
       onSuccess(`Successfully fed ${pet.name}!`);
     } catch (error) {
       onError(`Failed to record feeding for ${pet.name}`);
+    }
+  };
+
+  const handleUndo = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!lastFeedingEvent) return;
+    
+    setIsUndoing(true);
+    try {
+      await apiClient.delete(`/reminderevents/${lastFeedingEvent.id}`);
+      setLastFeedingEvent(null);
+      await refetchLatestFeeding();
+      onSuccess(`Undid feeding for ${pet.name}`);
+    } catch (error) {
+      onError(`Failed to undo feeding for ${pet.name}`);
+    } finally {
+      setIsUndoing(false);
     }
   };
 
@@ -64,21 +88,43 @@ const PetCard = ({
         <Card.Body>
           <Card.Title className="d-flex justify-content-between align-items-center mb-3">
             <h3 className="h4 mb-0">{pet.name}</h3>
-            <Button
-              variant="primary"
-              onClick={handleFeed}
-              disabled={createEvent.isPending}
-              size="sm"
-            >
-              {createEvent.isPending ? (
-                <>
-                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  Feeding...
-                </>
-              ) : (
-                'Feed'
+            <div className="d-flex align-items-center gap-2">
+              {lastFeedingEvent && (
+                <Button
+                  variant="outline-secondary"
+                  onClick={handleUndo}
+                  disabled={isUndoing}
+                  size="sm"
+                >
+                  {isUndoing ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                      Undoing...
+                    </>
+                  ) : (
+                    <>
+                      <i className="bi bi-arrow-counterclockwise me-1"></i>
+                      Undo Feed
+                    </>
+                  )}
+                </Button>
               )}
-            </Button>
+              <Button
+                variant="primary"
+                onClick={handleFeed}
+                disabled={createEvent.isPending}
+                size="sm"
+              >
+                {createEvent.isPending ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Feeding...
+                  </>
+                ) : (
+                  'Feed'
+                )}
+              </Button>
+            </div>
           </Card.Title>
           
           <Card.Text className="text-muted small mb-2">
