@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Modal, Button, Form, Nav, Alert } from 'react-bootstrap';
-import { useCreatePet, usePet } from '../hooks/usePets';
+import { useCreatePet } from '../hooks/usePets';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { petService } from '../api/services/petService';
 

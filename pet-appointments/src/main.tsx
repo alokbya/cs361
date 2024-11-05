@@ -21,6 +21,7 @@ import Login from './pages/Login/Login';
 import Register from './pages/Register/Register';
 import Layout from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import AuthLayout from './components/AuthLayout';
 
 // Create the query client
 const queryClient = new QueryClient({
@@ -44,16 +45,6 @@ const router = createBrowserRouter([
             <Home />
           </ProtectedRoute>
         ),
-        errorElement: <ErrorPage />,
-      },
-      {
-        path: "login",
-        element: <Login />,
-        errorElement: <ErrorPage />,
-      },
-      {
-        path: "register",
-        element: <Register />,
         errorElement: <ErrorPage />,
       },
       {
@@ -92,8 +83,24 @@ const router = createBrowserRouter([
         ),
         errorElement: <ErrorPage />
       }
-    ],
+    ]
   },
+  {
+    element: <AuthLayout />,
+    children: [
+        {
+          path: "login",
+          element: <Login />,
+          errorElement: <ErrorPage />,
+        },
+        {
+          path: "register",
+          element: <Register />,
+          errorElement: <ErrorPage />,
+        },
+      ]
+    }
+  
 ]);
 
 // Create App wrapper component
