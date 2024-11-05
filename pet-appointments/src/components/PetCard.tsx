@@ -1,4 +1,4 @@
-import { Card, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Card, Button, OverlayTrigger, Tooltip, Modal } from 'react-bootstrap';
 import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
 import { useLatestReminderEvent, useCreateReminderEvent } from '../hooks/useReminderEvents';
 import { ReminderEventType } from '../interfaces/IReminderEvent';
@@ -6,6 +6,7 @@ import type IPet from '../interfaces/IPet';
 import { useState } from 'react';
 import PetDetailsModal from './PetDetailsModal';
 import { apiClient } from '../api/client';
+import { useRemovePet } from '../hooks/usePets';
 
 interface PetCardProps {
   pet: IPet;
@@ -22,12 +23,28 @@ const PetCard = ({
   onSuccess,
   onError
 }: PetCardProps) => {
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+  const removePet = useRemovePet();  // Add our new hook
+  const [isRemoving, setIsRemoving] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [copied, setCopied] = useState(false);
   const [lastFeedingEvent, setLastFeedingEvent] = useState<{ id: string; time: Date } | null>(null);
   const [isUndoing, setIsUndoing] = useState(false);
   const createEvent = useCreateReminderEvent();
   const { data: latestFeeding, refetch: refetchLatestFeeding } = useLatestReminderEvent(pet.id);
+
+  const handleRemove = async () => {
+    try {
+      await removePet.mutateAsync({ 
+        petId: pet.id, 
+        userId: currentUserId 
+      });
+      onSuccess(`Removed ${pet.name} from your pets`);
+      setShowRemoveConfirm(false);
+    } catch (error) {
+      onError(`Failed to remove ${pet.name}. Please try again.`);
+    }
+  };
 
   const handleFeed = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click when clicking feed button
@@ -87,7 +104,20 @@ const PetCard = ({
       >
         <Card.Body>
           <Card.Title className="d-flex justify-content-between align-items-center mb-3">
-            <h3 className="h4 mb-0">{pet.name}</h3>
+            <div className="d-flex align-items-center">
+              <h3 className="h4 mb-0">{pet.name}</h3>
+              <Button
+                variant="outline-danger"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowRemoveConfirm(true);
+                }}
+                className="ms-2"
+              >
+                <i className="bi bi-trash3"></i>
+              </Button>
+            </div>
             <div className="d-flex align-items-center gap-2">
               {lastFeedingEvent && (
                 <Button
@@ -182,6 +212,46 @@ const PetCard = ({
         pet={pet}
         userNames={userNames}
       />
+
+      {/* Remove Confirmation Modal */}
+      <Modal 
+        show={showRemoveConfirm} 
+        onHide={() => setShowRemoveConfirm(false)}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Remove Pet</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>Are you sure you want to remove <strong>{pet.name}</strong> from your pets?</p>
+          <p className="text-muted mb-0">
+            This won't delete the pet, it will only remove your association with it. 
+            {userNames.length > 1 && ` Other users will still have access to ${pet.name}.`}
+          </p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button 
+            variant="outline-secondary" 
+            onClick={() => setShowRemoveConfirm(false)}
+          >
+            Cancel
+          </Button>
+          <Button 
+            variant="danger" 
+            onClick={handleRemove}
+            disabled={removePet.isPending}  // Use mutation state instead of local state
+          >
+            {removePet.isPending ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Removing...
+              </>
+            ) : (
+              'Remove'
+            )}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </>
   );
 };

@@ -59,16 +59,16 @@ export const useUpdatePet = () => {
   });
 };
 
-// Delete a pet
-export const useDeletePet = () => {
+export const useRemovePet = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: petService.delete,
-    onSuccess: (_, petId) => {
-      // Remove the specific pet from cache
-      queryClient.removeQueries({ queryKey: ['pets', petId] });
-      // Invalidate all pet lists since we don't know which users were associated
+    mutationFn: ({ petId, userId }: { petId: string; userId: string }) => 
+      petService.removeUser(petId, userId),
+    onSuccess: (_, { userId }) => {
+      // Invalidate user's pets list
+      queryClient.invalidateQueries({ queryKey: ['pets', 'user', userId] });
+      // You might also want to invalidate the general pets list
       queryClient.invalidateQueries({ queryKey: ['pets'] });
     },
   });

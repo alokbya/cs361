@@ -143,4 +143,26 @@ public static class PetEndpoints
             pet.Users.Select(u => u.Id)
         ));
     }
+
+    public static async Task<IResult> RemoveUserFromPet(
+    Guid petId,
+    Guid userId,
+    IPetRepository petRepo,
+    IUserRepository userRepo)
+    {
+        var pet = await petRepo.GetByIdAsync(petId);
+        if (pet == null) return Results.NotFound("Pet not found");
+
+        var user = await userRepo.GetByIdAsync(userId);
+        if (user == null) return Results.NotFound("User not found");
+
+        // Check if this is the last user
+        if (pet.Users.Count == 1)
+            return Results.BadRequest("Cannot remove the last user from a pet");
+
+        pet.Users.Remove(user);
+        await petRepo.UpdateAsync(pet);
+
+        return Results.Ok();
+    }
 }
