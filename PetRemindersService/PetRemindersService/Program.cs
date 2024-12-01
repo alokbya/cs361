@@ -69,18 +69,16 @@ builder.Services.AddHttpsRedirection(options =>
 });
 
 var app = builder.Build();
-app.UseCors("AllowReactApp");
+app.UseCors("AllowReactApp"); // I don't think I need this line
 
-// Add this after building the app
-//if (app.Environment.IsDevelopment())
-//{
-//    using (var scope = app.Services.CreateScope())
-//    {
-//        var db = scope.ServiceProvider.GetRequiredService<PetReminderContext>();
-//        //db.Database.EnsureDeleted(); // Be careful with this in production!
-//        db.Database.EnsureCreated();
-//    }
-//}
+if (app.Environment.IsDevelopment())
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var db = scope.ServiceProvider.GetRequiredService<PetReminderContext>();
+        db.Database.Migrate(); // This line applies pending migrations
+    }
+}
 
 // map endpoints
 app.MapAuthEndpoints();
