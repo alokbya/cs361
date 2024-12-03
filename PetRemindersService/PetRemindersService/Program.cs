@@ -17,7 +17,9 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp",
         builder => builder
-            .WithOrigins("http://localhost:5173") // Your React app's URL
+            .WithOrigins(
+                "http://localhost:5173",    // Pet Reminders React app URL
+                "http:/localhost:3026")     // Report Service URL
             .AllowAnyMethod()
             .AllowAnyHeader()
             .AllowCredentials()

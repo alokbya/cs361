@@ -1,9 +1,7 @@
 // src/hooks/useNotifications.ts
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { emailService } from '../api/services/emailService';
 import { userService } from '../api/services/userService';
-import type { IEmailResponse, IEmailRequest } from '../interfaces/responses/IEmailResponse';
-import type IUser from '../interfaces/IUser';
 
 interface NotificationRequest {
   petName: string;
