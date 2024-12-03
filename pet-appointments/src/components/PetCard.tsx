@@ -7,6 +7,9 @@ import { useState } from 'react';
 import PetDetailsModal from './PetDetailsModal';
 import { apiClient } from '../api/client';
 import { useRemovePet } from '../hooks/usePets';
+// In PetCard.tsx
+import { useSendNotification } from '../hooks/useNotifications';  // Add this import
+
 
 interface PetCardProps {
   pet: IPet;
@@ -32,6 +35,24 @@ const PetCard = ({
   const [isUndoing, setIsUndoing] = useState(false);
   const createEvent = useCreateReminderEvent();
   const { data: latestFeeding, refetch: refetchLatestFeeding } = useLatestReminderEvent(pet.id);
+  const sendNotification = useSendNotification();
+
+  // Add the notification handler
+  const handleNotifyOwners = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click when clicking notify
+    
+    try {
+      await sendNotification.mutateAsync({
+        petName: pet.name,
+        petId: pet.id,
+        userIds: pet.userIds,
+        currentUserId: currentUserId
+      });
+      onSuccess(`Other owners notified that ${pet.name} was fed`);
+    } catch (error) {
+      onError("Failed to send notifications");
+    }
+  };
 
   const handleRemove = async () => {
     try {
@@ -152,6 +173,24 @@ const PetCard = ({
                   </>
                 ) : (
                   'Feed'
+                )}
+              </Button>
+              <Button
+                variant="outline-primary"
+                onClick={handleNotifyOwners}
+                disabled={sendNotification.isPending || pet.userIds.length <= 1}
+                size="sm"
+              >
+                {sendNotification.isPending ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Notifying...
+                  </>
+                ) : (
+                  <>
+                    <i className="bi bi-bell me-1"></i>
+                    Notify
+                  </>
                 )}
               </Button>
             </div>
