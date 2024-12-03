@@ -27,6 +27,9 @@ const Navigation: React.FC = () => {
                         <LinkContainer to="/">
                             <Nav.Link>Home</Nav.Link>
                         </LinkContainer>
+                        <LinkContainer to="/portions">
+                            <Nav.Link>Portions</Nav.Link>
+                        </LinkContainer>
                         <LinkContainer to="/schedules">
                             <Nav.Link>Schedules</Nav.Link>
                         </LinkContainer>

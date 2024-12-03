@@ -13,6 +13,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { AuthProvider } from './contexts/AuthContext';
 import Home from './pages/Home';
+import Portions from './pages/Portions';
 import Schedules from './pages/Schedules';
 import Details from './pages/Details';
 import Events from './pages/Events';
@@ -61,6 +62,15 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <Schedules />
+          </ProtectedRoute>
+        ),
+        errorElement: <ErrorPage />
+      },
+      {
+        path: "portions",
+        element: (
+          <ProtectedRoute>
+            <Portions />
           </ProtectedRoute>
         ),
         errorElement: <ErrorPage />
