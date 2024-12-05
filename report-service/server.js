@@ -174,8 +174,10 @@ const generateHtmlReport = (petName, data, startDate, endDate) => {
 
 app.get('/api/feeding-report', async (req, res) => {
     const { petId, startDate, endDate, petName, format = 'json' } = req.query;
+    console.log(`\n📊 Report request for ${petName} (${petId})\n   Period: ${startDate} to ${endDate}`);
 
     if (!petId || !startDate || !endDate || !petName) {
+        console.log('❌ Missing required fields');
         return res.status(400).json({
             error: 'Missing required fields. Please provide petId, petName, startDate, and endDate.'
         });
@@ -184,10 +186,18 @@ app.get('/api/feeding-report', async (req, res) => {
     try {
         // Get events from C# API
         const response = await petRemindersApi.get(`/reminderevents/pet/${petId}`);
-        const allEvents = response.data;
+        console.log(`📥 Received ${response.data.length} total events`);
         
         // Filter events by date range
-        const filteredEvents = filterEventsByDateRange(allEvents, startDate, endDate);
+        const filteredEvents = filterEventsByDateRange(response.data, startDate, endDate);
+        console.log(`✔️  Filtered to ${filteredEvents.length} events in date range`);
+
+        if (filteredEvents.length > 0) {
+            console.log('📋 Events:', filteredEvents.map(e => ({
+                time: new Date(e.eventTime).toLocaleString(),
+                by: e.userName
+            })));
+        }
 
         const reportData = {
             petId,
@@ -199,16 +209,18 @@ app.get('/api/feeding-report', async (req, res) => {
         };
 
         if (format === 'html') {
+            console.log('📤 Sending HTML report');
             const htmlContent = generateHtmlReport(petName, reportData, startDate, endDate);
             res.setHeader('Content-Type', 'text/html');
             res.setHeader('Content-Disposition', `attachment; filename="feeding-report-${petName}-${startDate}.html"`);
             return res.send(htmlContent);
         }
 
+        console.log('📤 Sending JSON response');
         res.json(reportData);
 
     } catch (error) {
-        console.error('Error fetching data from C# API:', error);
+        console.error('❌ Error:', error.message);
         res.status(500).json({ 
             error: 'Failed to generate report',
             details: process.env.NODE_ENV !== 'production' ? error.message : undefined

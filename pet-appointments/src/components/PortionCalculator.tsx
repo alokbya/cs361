@@ -20,7 +20,8 @@ const PortionCalculator: React.FC = () => {
     mutate: convertUnit,
     isPending: isConverting,
     data: conversionData,
-    error: conversionError
+    error: conversionError,
+    reset
   } = useUnitConversion();
 
   // Parse the numeric value from portion string (e.g., "2oz" -> 2)
@@ -33,6 +34,7 @@ const PortionCalculator: React.FC = () => {
     e.preventDefault();
     setDisplayUnit('oz'); // Reset to oz
     setConvertedValue(null); // Clear any converted value
+    reset();
     calculatePortion({
       weight: parseFloat(weight),
       age: parseFloat(age),

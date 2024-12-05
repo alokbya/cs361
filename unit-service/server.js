@@ -10,7 +10,6 @@ app.use(cors({
     allowedHeaders: ['Content-Type']
 }));
 
-// Middleware to parse JSON bodies
 app.use(express.json());
 
 // Conversion constants
@@ -26,51 +25,93 @@ function convertGramsToOz(grams) {
     return Number((grams * GRAMS_TO_OZ).toFixed(2));
 }
 
+// Logger function
+function logConversion(requestId, { value, from }, result, error = null) {
+    const timestamp = new Date().toISOString();
+    const status = error ? 'ERROR' : 'SUCCESS';
+    
+    console.log('----------------------------------------');
+    console.log(`[${timestamp}] Conversion Request #${requestId}`);
+    console.log('Request:', {
+        value: Number(value),
+        from: from,
+        to: from === 'oz' ? 'grams' : 'oz'
+    });
+    
+    if (error) {
+        console.log('Status:', status);
+        console.log('Error:', error.message);
+    } else {
+        console.log('Status:', status);
+        console.log('Result:', {
+            originalValue: Number(value),
+            originalUnit: from,
+            convertedValue: result,
+            convertedUnit: from === 'oz' ? 'grams' : 'oz'
+        });
+    }
+    console.log('----------------------------------------\n');
+}
+
+// Request counter for logging
+let requestCounter = 0;
+
 // GET endpoint for converting oz to grams
 app.get('/api/convert', (req, res) => {
+    const requestId = ++requestCounter;
     const { value, from } = req.query;
 
-    // Validate required fields
-    if (!value || !from) {
-        return res.status(400).json({
-            error: 'Missing required fields. Please provide value and from unit.'
-        });
-    }
+    try {
+        // Validate required fields
+        if (!value || !from) {
+            const error = new Error('Missing required fields. Please provide value and from unit.');
+            logConversion(requestId, { value, from }, null, error);
+            return res.status(400).json({ error: error.message });
+        }
 
-    // Validate numeric value
-    const numericValue = Number(value);
-    if (isNaN(numericValue)) {
-        return res.status(400).json({
-            error: 'Value must be a valid number.'
-        });
-    }
+        // Validate numeric value
+        const numericValue = Number(value);
+        if (isNaN(numericValue)) {
+            const error = new Error('Value must be a valid number.');
+            logConversion(requestId, { value, from }, null, error);
+            return res.status(400).json({ error: error.message });
+        }
 
-    // Perform conversion
-    let result;
-    let toUnit;
-    switch (from.toLowerCase()) {
-        case 'oz':
-            result = convertOzToGrams(numericValue);
-            toUnit = 'grams';
-            break;
-        case 'grams':
-            result = convertGramsToOz(numericValue);
-            toUnit = 'oz';
-            break;
-        default:
-            return res.status(400).json({
-                error: 'Invalid unit. Please use "oz" or "grams".'
-            });
-    }
+        // Perform conversion
+        let result;
+        let toUnit;
+        switch (from.toLowerCase()) {
+            case 'oz':
+                result = convertOzToGrams(numericValue);
+                toUnit = 'grams';
+                break;
+            case 'grams':
+                result = convertGramsToOz(numericValue);
+                toUnit = 'oz';
+                break;
+            default:
+                const error = new Error('Invalid unit. Please use "oz" or "grams".');
+                logConversion(requestId, { value, from }, null, error);
+                return res.status(400).json({ error: error.message });
+        }
 
-    res.json({
-        originalValue: numericValue,
-        originalUnit: from,
-        convertedValue: result,
-        convertedUnit: toUnit
-    });
+        const response = {
+            originalValue: numericValue,
+            originalUnit: from,
+            convertedValue: result,
+            convertedUnit: toUnit
+        };
+
+        logConversion(requestId, { value, from }, result);
+        res.json(response);
+
+    } catch (error) {
+        logConversion(requestId, { value, from }, null, error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 });
 
 app.listen(port, () => {
     console.log(`Unit Conversion API running at http://localhost:${port}`);
+    console.log('Ready to handle conversion requests...\n');
 });
