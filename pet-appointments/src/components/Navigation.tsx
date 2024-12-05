@@ -30,15 +30,15 @@ const Navigation: React.FC = () => {
                         <LinkContainer to="/portions">
                             <Nav.Link>Portions</Nav.Link>
                         </LinkContainer>
-                        <LinkContainer to="/schedules">
+                        {/* <LinkContainer to="/schedules">
                             <Nav.Link>Schedules</Nav.Link>
-                        </LinkContainer>
+                        </LinkContainer> */}
                         <LinkContainer to="/details">
                             <Nav.Link>Details</Nav.Link>
                         </LinkContainer>
-                        <LinkContainer to="/events">
+                        {/* <LinkContainer to="/events">
                             <Nav.Link>Events</Nav.Link>
-                        </LinkContainer>
+                        </LinkContainer> */}
                     </Nav>
                     {currentUser && (
                         <Nav>
