@@ -1,26 +1,87 @@
-// src/components/PortionCalculator.tsx
-import React, { useState } from 'react';
-import { Card, Form, Button, Alert } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Card, Form, Button, Alert, Spinner } from 'react-bootstrap';
 import { usePortionCalculator } from '../hooks/usePortionCalculator';
+import { useUnitConversion } from '../hooks/useUnitConversion';
 
 const PortionCalculator: React.FC = () => {
   const [weight, setWeight] = useState<string>('');
   const [age, setAge] = useState<string>('');
+  const [displayUnit, setDisplayUnit] = useState<'oz' | 'grams'>('oz');
+  const [convertedValue, setConvertedValue] = useState<string | null>(null);
   
   const { 
     mutate: calculatePortion, 
-    data, 
-    isPending, 
-    error 
+    data: portionData, 
+    isPending: isCalculating, 
+    error: calculationError 
   } = usePortionCalculator();
+
+  const {
+    mutate: convertUnit,
+    isPending: isConverting,
+    data: conversionData,
+    error: conversionError
+  } = useUnitConversion();
+
+  // Parse the numeric value from portion string (e.g., "2oz" -> 2)
+  const getNumericPortion = () => {
+    if (!portionData) return 0;
+    return parseFloat(portionData.portion.replace('oz', ''));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setDisplayUnit('oz'); // Reset to oz
+    setConvertedValue(null); // Clear any converted value
     calculatePortion({
       weight: parseFloat(weight),
       age: parseFloat(age),
       id: 'temp-id'
     });
+  };
+
+  const toggleUnit = () => {
+    const numericPortion = getNumericPortion();
+    
+    if (displayUnit === 'oz') {
+      // Converting to grams
+      convertUnit({
+        value: numericPortion,
+        from: 'oz'
+      });
+    } else {
+      // Converting to oz
+      convertUnit({
+        value: parseFloat(convertedValue || '0'),
+        from: 'grams'
+      });
+    }
+    setDisplayUnit(current => current === 'oz' ? 'grams' : 'oz');
+  };
+
+  // Update convertedValue when we get new conversion data
+  useEffect(() => {
+    if (conversionData) {
+      setConvertedValue(conversionData.convertedValue.toString());
+    }
+  }, [conversionData]);
+
+  const getDisplayValue = () => {
+    if (!portionData) return null;
+    
+    if (displayUnit === 'oz') {
+      return portionData.portion;
+    }
+
+    if (isConverting) {
+      return (
+        <Spinner animation="border" size="sm" role="status">
+          <span className="visually-hidden">Converting...</span>
+        </Spinner>
+      );
+    }
+
+    return convertedValue ? `${convertedValue}g` : null;
   };
 
   return (
@@ -72,10 +133,10 @@ const PortionCalculator: React.FC = () => {
           <Button
             type="submit"
             variant="primary"
-            disabled={isPending}
+            disabled={isCalculating}
             className="w-100"
           >
-            {isPending ? (
+            {isCalculating ? (
               <>
                 <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                 Calculating...
@@ -89,20 +150,31 @@ const PortionCalculator: React.FC = () => {
           </Button>
         </Form>
 
-        {error && (
+        {(calculationError || conversionError) && (
           <Alert variant="danger" className="mt-3">
             <i className="bi bi-exclamation-triangle-fill me-2"></i>
-            An error occurred while calculating the portion.
+            An error occurred. Please try again.
           </Alert>
         )}
 
-        {data && (
+        {portionData && (
           <Alert variant="success" className="mt-3">
-            <Alert.Heading className="h5">
-              <i className="bi bi-check-circle-fill me-2"></i>
-              Recommended Portion Size
+            <Alert.Heading className="h5 d-flex justify-content-between align-items-center">
+              <span>
+                <i className="bi bi-check-circle-fill me-2"></i>
+                Recommended Portion Size
+              </span>
+              <Button
+                variant="outline-success"
+                size="sm"
+                onClick={toggleUnit}
+                disabled={isConverting}
+              >
+                <i className="bi bi-arrow-repeat me-2"></i>
+                Switch to {displayUnit === 'oz' ? 'Grams' : 'Ounces'}
+              </Button>
             </Alert.Heading>
-            <p className="h3 mb-2">{data.portion}</p>
+            <p className="h3 mb-2">{getDisplayValue()}</p>
             <p className="text-muted small mb-0">
               <i className="bi bi-info-circle me-2"></i>
               This is the recommended portion size per meal, assuming two meals per day.
